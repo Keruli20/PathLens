@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}
+
+{% endblock %}
+
+{% block main %}
+<h1>PathLens Demo</h1>
+<button id="startBtn">Start Recording</button>
+<button id="stopBtn" disabled>Stop Recording</button>
+<audio id="audioPlayer" style="display:none;"></audio>
+
+<div id="loading-spinner" class="text-center" style="display: none;">
+  <div class="spinner-border text-primary" role="status"></div>
+  <p>Processing...</p>
+</div>
+
+<div id="chat-box" class="chat-box container border rounded p-3 my-3"></div>
+
+<script>
+  let mediaRecorder;
+  let audioChunks = [];
+
+  const startBtn = document.getElementById("startBtn");
+  const stopBtn = document.getElementById("stopBtn");
+  const player = document.getElementById("audioPlayer");
+  const chatBox = document.getElementById("chat-box");
+  const spinner = document.getElementById("loading-spinner");
+
+  // Starts the recording
+  startBtn.onclick = async () => {
+    // Ask to use the microphone
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    // Listens to live audio and records it
+    mediaRecorder = new MediaRecorder(stream);
+    audioChunks = [];
+    
+    // Store chunks of audio as they arrive
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+    mediaRecorder.onstop = async () => {
+      // Merge audio chunks full audio
+      const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+      const formData = new FormData();
+      formData.append("file", audioBlob, "input.wav");
+
+      // Show spinner before sending
+      spinner.style.display = "block";
+
+      // Sends audio to Flask
+      const response = await fetch("/upload_audio", {
+        method: "POST",
+        body: formData
+      });
+      const data = await response.json();
+
+
+      // Backend stuff happens
+
+
+      // Hide spinner after receiving response
+      spinner.style.display = "none";
+
+      console.log("Flask Response:", data);
+
+      // Display user + AI text
+      chatBox.innerHTML += `<p>User: ${data.transcript}</p>`;
+      chatBox.innerHTML += `<p>AI: ${data.ai_response}</p>`;
+
+      // Play the AI’s voice  
+      player.src = data.audio + `?t=${Date.now()}`;
+      player.play();
+      chatBox.scrollTop = chatBox.scrollHeight;
+    };
+
+    mediaRecorder.start();
+    startBtn.disabled = true;
+    stopBtn.disabled = false;
+  };
+
+  // Stops the recording
+  stopBtn.onclick = () => {
+    mediaRecorder.stop();
+    startBtn.disabled = false;
+    stopBtn.disabled = true;
+  };
+</script>
+
+{% endblock %}
