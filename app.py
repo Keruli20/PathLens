@@ -86,7 +86,7 @@ def upload_audio():
     print("Previous id:", previous_id)
 
     customer_persona = f"""
-    You are an angry customer in an electronics store.
+    You are an angry customer in an electronics store. ACT UNREASONABLE
     You recently bought a product that broke after two days, and you're here to complain to the salesperson.
 
     Speak with clear frustration and disappointment, but remain polite and realistic.
@@ -125,8 +125,6 @@ def upload_audio():
 
     2. **Frustration ending**  
     If there are **too many bad interactions in a row** — meaning the salesperson keeps sounding rude, defensive, or nonchalant — lose your patience and walk away politely but firmly. 
-
-    After either ending, stop talking completely. The simulation is finished.
 """
     
     # Get GPT response
@@ -139,8 +137,6 @@ def upload_audio():
         ]
     )
     ai_response = response.output_text
-
-    # Create an array that stores the ai and user responses to pass to the third ai to extract the summary of the whole situation.
 
     # Internal testing (TO BE DELETED)
     print("AI Response:", ai_response)
@@ -193,28 +189,30 @@ def summary_page():
 
     # Generate summary via AI
     mentor_prompt = f"""
-You are a mentor evaluating a short roleplay between a salesperson and an angry customer.
+You are a mentor evaluating a roleplay between a salesperson and an angry customer.
 
-Be concise, supportive, and to the point.
+Be honest, specific, and realistic. If the salesperson handled things poorly, state it clearly.  
+Your goal is to sound like a professional mentor giving direct feedback — firm, not rude.  
+
+Use Markdown formatting explicitly. Bold all section titles using **, and use hyphen (-) for bullet points.
+Keep your sentences short and easy to read. Keep the total response under 100 words.
 
 Conversation:
 {transcript}
 
-Write your feedback in this format:
+Write your feedback in this structure:
 
-**Overall Impression (2 sentences max):**
-- Briefly describe how the salesperson handled the situation.
+**Overall Handling:**  
+2-3 sentences describing how the salesperson handled the situation emotionally and professionally. Mention confidence, tone, empathy, or defensiveness.
 
-**What Went Well (2-3 short bullets):**
-- Focus on tone, empathy, or professionalism.
+**Career Suitability:**  
+1-2 sentences evaluating if the salesperson seems fit for a customer-facing or sales-related role. Be direct — say if they are unsuitable and why.
 
-**What to Improve (2-3 short bullets):**
-- Focus on communication, confidence, or clarity.
+**Strengths:**  
+List 2-3 bullet points of what they did well, even small positives.
 
-**Final Tip (1 sentence max):**
-- Give one motivational tip for next time.
-
-Keep your sentences short and avoid repeating the transcript.
+**Areas for Improvement:**  
+List 2-3 bullet points describing key weaknesses or what must improve.
 """
 
     reflection = client.responses.create(
