@@ -2,6 +2,7 @@ from flask import Flask, flash, redirect, render_template, jsonify, request, ses
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import markdown
 
 # Reads the .env file which contains the key values
 load_dotenv()
@@ -17,6 +18,7 @@ app.secret_key = os.getenv("SECRET_KEY")
 @app.route("/")
 def index():
     session.pop("previous_response_id", None)
+    session["conversation_log"] = []
     return render_template("index.html")
 
 @app.route('/upload_audio', methods=['POST'])
@@ -83,7 +85,7 @@ def upload_audio():
     # Internal testing (TO BE DELETED)
     print("Previous id:", previous_id)
 
-    customer_persona = """
+    customer_persona = f"""
     You are an angry customer in an electronics store.
     You recently bought a product that broke after two days, and you're here to complain to the salesperson.
 
@@ -138,6 +140,8 @@ def upload_audio():
     )
     ai_response = response.output_text
 
+    # Create an array that stores the ai and user responses to pass to the third ai to extract the summary of the whole situation.
+
     # Internal testing (TO BE DELETED)
     print("AI Response:", ai_response)
 
@@ -158,7 +162,16 @@ def upload_audio():
     # Internal testing (TO BE DELETED)
     print("TTS audio file saved:", audio_path)
 
-    # 5️⃣ Return everything to frontend
+    log = {
+        "user": user_message,
+        "emotion": user_emotion,
+        "ai": ai_response
+    }
+
+    session["conversation_log"].append(log)
+
+
+    # Return everything to frontend
     return jsonify({
         "message": "Success",
         "transcript": user_message,
@@ -166,4 +179,51 @@ def upload_audio():
         "audio": audio_path,
         "emotion":user_emotion
     })
+
+@app.route("/summary")
+def summary_page():
+    # Get the stored conversation
+    log = session.get("conversation_log", [])
+
+    # Combine transcript into readable text
+    transcript = "\n".join([
+        f"User ({t['emotion']}): {t['user']}\nCustomer: {t['ai']}"
+        for t in log
+    ])
+
+    # Generate summary via AI
+    mentor_prompt = f"""
+You are a mentor evaluating a short roleplay between a salesperson and an angry customer.
+
+Be concise, supportive, and to the point.
+
+Conversation:
+{transcript}
+
+Write your feedback in this format:
+
+**Overall Impression (2 sentences max):**
+- Briefly describe how the salesperson handled the situation.
+
+**What Went Well (2-3 short bullets):**
+- Focus on tone, empathy, or professionalism.
+
+**What to Improve (2-3 short bullets):**
+- Focus on communication, confidence, or clarity.
+
+**Final Tip (1 sentence max):**
+- Give one motivational tip for next time.
+
+Keep your sentences short and avoid repeating the transcript.
+"""
+
+    reflection = client.responses.create(
+        model="gpt-4.1-mini",
+        input=[{"role": "system", "content": mentor_prompt}]
+    )
+
+    summary_text = markdown.markdown(reflection.output_text)
+
+    return render_template("summary.html", summary=summary_text)
+
 

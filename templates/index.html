@@ -21,7 +21,27 @@
   <p>Processing...</p>
 </div>
 
+<div id="emotion-display" style="
+  font-size: 2rem;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 20px;
+  color: #444;
+">
+  <!-- Emotion will appear here -->
+</div>
+
 <div id="chat-box" class="chat-box container border rounded p-3 my-3"></div>
+
+<div id="chat-box" ...></div>
+
+<!-- Summary button -->
+<div class="text-center mt-4">
+  <a href="/summary" id="summaryBtn" class="btn btn-primary">
+    View Conversation Summary
+  </a>
+</div>
+
 
 <script>
   let mediaRecorder;
@@ -69,9 +89,13 @@
 
       console.log("Flask Response:", data);
 
+      const emotionDisplay = document.getElementById("emotion-display");
+      emotionDisplay.textContent = `Emotion: ${data.emotion.toUpperCase()}`;
+
+
       // Display user + AI text
-      chatBox.innerHTML += `<p>User: ${data.transcript}</p>`;
-      chatBox.innerHTML += `<p>AI: ${data.ai_response}</p>`;
+      chatBox.innerHTML += `<p>You: ${data.transcript}</p>`;
+      chatBox.innerHTML += `<p>Customer: ${data.ai_response}</p>`;
 
       // Play the AI’s voice  
       player.src = data.audio + `?t=${Date.now()}`;

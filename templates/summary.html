@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block title %}Conversation Summary{% endblock %}
+{% block main %}
+<div class="container mt-5" style="max-width: 700px;">
+  <h2 class="text-center mb-4">Conversation Summary</h2>
+  
+  <div class="card shadow-sm p-4">
+    <p style="white-space: pre-wrap;">{{ summary|safe }}</p>
+  </div>
+
+  <div class="text-center mt-4">
+    <a href="/" class="btn btn-outline-primary">Restart Simulation</a>
+  </div>
+</div>
+{% endblock %}
